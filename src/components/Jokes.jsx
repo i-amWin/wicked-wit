@@ -76,7 +76,7 @@ const Jokes = () => {
       )}
 
       <button className="fixed bottom-4 text-sm" onClick={() => fetchJoke()}>
-        Reload / Click here / Press Space key to get a new joke
+        Reload / Click here / Press Space bar to get a new joke
       </button>
     </section>
   );
