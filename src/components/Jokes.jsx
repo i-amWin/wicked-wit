@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 const SingleJoke = ({ joke }) => {
   const jokeArray = joke.split("\n");
-  console.log(jokeArray);
 
   return (
     <article className="max-w-screen-sm">
@@ -30,28 +29,55 @@ const TwoPartJoke = ({ setup, delivery }) => {
 
 const Jokes = () => {
   const [joke, setJoke] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchJoke = async () => {
+  const fetchJoke = useCallback(async () => {
+    try {
+      setLoading(true);
+      setJoke({});
       const response = await fetch("https://v2.jokeapi.dev/joke/Dark");
+      const fetchedJoke = await response.json();
 
-      const joke = await response.json();
-      console.log(joke);
-      setJoke(joke);
-    };
-
-    fetchJoke();
+      setJoke(fetchedJoke);
+    } catch (error) {
+      setJoke({ error: true, message: error.message });
+      console.log(error.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (joke.error) return <p className="pt-16">{joke.error}</p>;
+  useEffect(() => {
+    fetchJoke();
+  }, [fetchJoke]);
+
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.code === "Space") {
+        fetchJoke();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyPress);
+
+    return () => {
+      document.removeEventListener("keypress", handleKeyPress);
+    };
+  }, [fetchJoke]);
 
   return (
-    <section className="flex justify-center items-center h-full">
-      {joke.type === "single" ? (
+    <section className="flex flex-col justify-center items-center h-full">
+      {loading && <p>Loading...</p>}
+      {joke?.error && <p>{joke.message}</p>}
+      {joke?.type === "single" ? (
         <SingleJoke joke={joke?.joke} />
       ) : (
         <TwoPartJoke setup={joke?.setup} delivery={joke?.delivery} />
       )}
+
+      <button className="fixed bottom-4 text-sm" onClick={() => fetchJoke()}>
+        Reload / Click here / Press Space key to get a new joke
+      </button>
     </section>
   );
 };
